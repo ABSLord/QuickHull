@@ -16,7 +16,7 @@ namespace QuickHull11
 
         private List<Point> points;
 
-        public List<Point> hull;
+        private List<Point> hull;
 
         public Form1()
         {
@@ -46,7 +46,7 @@ namespace QuickHull11
         }
 
 
-        int Side(Point p1, Point p2, Point p)
+        private int Side(Point p1, Point p2, Point p)
         {
             int val = (p.Y - p1.Y) * (p2.X - p1.X) -
                       (p2.Y - p1.Y) * (p.X - p1.X);
@@ -58,16 +58,16 @@ namespace QuickHull11
             return 0;
         }
 
-        int Distance(Point p1, Point p2, Point p)
+        private int Distance(Point p1, Point p2, Point p)
         {
             return Math.Abs((p.Y - p1.Y) * (p2.X - p1.X) - (p2.Y - p1.Y) * (p.X - p1.X));
         }
 
 
-        public void QuickHull()
+        private void QuickHull()
         {
 
-            if (points.Count < 3)
+            if (points.Count <= 3)
             {
                 foreach(var p in points)
                 {
@@ -103,11 +103,13 @@ namespace QuickHull11
             CreateHull(pmax, pmin, right);
         }
 
-        public void CreateHull(Point a, Point b, List<Point> points)
+        private void CreateHull(Point a, Point b, List<Point> points)
         {
             int pos = hull.IndexOf(b);
+
             if (points.Count == 0)
                 return;
+
             if (points.Count == 1)
             {
                 Point pp = points[0];
@@ -190,65 +192,5 @@ namespace QuickHull11
             points.Clear();
             hull.Clear();
         }
-
-        //old algorithm
-        /*void QuickHull(List<Point> a, Point p1, Point p2, int side)
-        {
-            int ind = -1;
-            int max_dist = 0;
-            for (int i = 0; i < a.Count; i++)
-            {
-                int tmp = Distance(p1, p2, a[i]);
-                if (Side(p1, p2, a[i]) == side && tmp > max_dist)
-                {
-                    ind = i;
-                    max_dist = tmp;
-                }
-            }
-            if (ind == -1)
-            {
-                hull.Add(p1);
-                hull.Add(p2);
-                return;
-            }
-            QuickHull(a, a[ind], p1, -Side(a[ind], p1, p2));
-            QuickHull(a, a[ind], p2, -Side(a[ind], p2, p1));
-        }
-
-        void Construction(List<Point> a, int n)
-        {
-            Point left = points
-                .Select(p => new { point = p, x = p.X })
-                .Aggregate((p1, p2) => p1.x < p2.x ? p1 : p2).point;
-
-            Point right = points
-                .Select(p => new { point = p, x = p.X })
-                .Aggregate((p1, p2) => p1.x > p2.x ? p1 : p2).point;
-
-            QuickHull(a, left, right, 1);
-
-            QuickHull(a, left, right, -1);
-        }
-
-        private Point GetCentroid(List<Point> lst)
-        {
-            int x = 0;
-            int y = 0;
-            foreach(Point p in lst)
-            {
-                x += p.X;
-                y += p.Y;
-            }
-            x = x / lst.Count;
-            y = y / lst.Count;
-            return new Point(x, y);
-        }
-
-        public double Angle(Point A, Point center)
-        {
-            double angle = Math.Atan2((A.Y - center.Y), (A.X - center.X));
-            return angle;
-        }*/
-
     }
 }
