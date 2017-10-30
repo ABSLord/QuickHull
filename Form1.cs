@@ -16,7 +16,7 @@ namespace QuickHull11
 
         private List<Point> points;
 
-        private List<Point> hull;
+        public List<Point> hull;
 
         public Form1()
         {
@@ -37,7 +37,7 @@ namespace QuickHull11
                 points.Add(new Point(e.X, e.Y));
                 graphics.DrawRectangle(pen, e.X, e.Y, 1, 1);
                 pictureBox1.Invalidate();
-                if(points.Count >= 2)
+                if(points.Count >= 3)
                 {
                     button1.Enabled = true;
                     button2.Enabled = true;
@@ -64,11 +64,138 @@ namespace QuickHull11
         }
 
 
-        void QuickHull(List<Point> a, Point p1, Point p2, int side)
+        public void QuickHull()
+        {
+
+            if (points.Count < 3)
+            {
+                foreach(var p in points)
+                {
+                    hull.Add(p);
+                }
+                return;
+            }
+                
+            Point pmin = points
+                .Select(p => new { point = p, x = p.X })
+                .Aggregate((p1, p2) => p1.x < p2.x ? p1 : p2).point;
+
+            Point pmax = points
+                .Select(p => new { point = p, x = p.X })
+                .Aggregate((p1, p2) => p1.x > p2.x ? p1 : p2).point;
+
+            hull.Add(pmin);
+            hull.Add(pmax);
+
+            List<Point> left = new List<Point>();
+            List<Point> right = new List<Point>();
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                Point p = points[i];
+                if (Side(pmin, pmax, p) == 1)
+                    left.Add(p);
+                else
+                if (Side(pmin, pmax, p) == -1)
+                    right.Add(p);
+            }
+            CreateHull(pmin, pmax, left);
+            CreateHull(pmax, pmin, right);
+        }
+
+        public void CreateHull(Point a, Point b, List<Point> points)
+        {
+            int pos = hull.IndexOf(b);
+            if (points.Count == 0)
+                return;
+            if (points.Count == 1)
+            {
+                Point pp = points[0];
+                hull.Insert(pos, pp);
+                return;
+            }
+
+            int dist = int.MinValue;
+            int point = 0;
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                Point pp = points[i];
+                int distance = Distance(a, b, pp);
+                if (distance > dist)
+                {
+                    dist = distance;
+                    point = i;
+                }
+            }
+
+            Point p = points[point];
+            hull.Insert(pos, p);
+            List<Point> ap = new List<Point>();
+            List<Point> pb = new List<Point>();
+
+            // слева от AP
+            for (int i = 0; i < points.Count; i++)
+            {
+                Point pp = points[i];
+                if (Side(a, p, pp) == 1)
+                {
+                    ap.Add(pp);
+                }
+            }
+            // слева от PB
+            for (int i = 0; i < points.Count; i++)
+            {
+                Point pp = points[i];
+                if (Side(p, b, pp) == 1)
+                {
+                    pb.Add(pp);
+                }
+            }
+            CreateHull(a, p, ap);
+            CreateHull(p, b, pb);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            hull.Clear();
+            if(points.Count!=0)
+            {
+                pictureBox1.Image = new Bitmap(pictureBox1.Width, pictureBox1.Height);
+                Graphics graphics1 = Graphics.FromImage(pictureBox1.Image);
+                graphics1.Clear(Color.White);
+                Pen pen1 = new Pen(Color.Red);
+                foreach (var p in points)
+                {
+                    graphics1.DrawRectangle(pen1, p.X, p.Y, 1, 1);
+                    pictureBox1.Invalidate();
+                }
+
+            }
+            Graphics graphics = Graphics.FromImage(pictureBox1.Image);
+            Pen pen = new Pen(Color.Red);
+            QuickHull();
+            graphics.DrawPolygon(pen, hull.ToArray());
+            pictureBox1.Invalidate();
+
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            pictureBox1.Image = new Bitmap(pictureBox1.Width, pictureBox1.Height);
+            Graphics graphics = Graphics.FromImage(pictureBox1.Image);
+            graphics.Clear(Color.White);
+            button1.Enabled = false;
+            button2.Enabled = false;
+            points.Clear();
+            hull.Clear();
+        }
+
+        //old algorithm
+        /*void QuickHull(List<Point> a, Point p1, Point p2, int side)
         {
             int ind = -1;
             int max_dist = 0;
-
             for (int i = 0; i < a.Count; i++)
             {
                 int tmp = Distance(p1, p2, a[i]);
@@ -121,42 +248,7 @@ namespace QuickHull11
         {
             double angle = Math.Atan2((A.Y - center.Y), (A.X - center.X));
             return angle;
-        }
+        }*/
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            hull.Clear();
-            if(points.Count!=0)
-            {
-                pictureBox1.Image = new Bitmap(pictureBox1.Width, pictureBox1.Height);
-                Graphics graphics1 = Graphics.FromImage(pictureBox1.Image);
-                graphics1.Clear(Color.White);
-                Pen pen1 = new Pen(Color.Red);
-                foreach (var p in points)
-                {
-                    graphics1.DrawRectangle(pen1, p.X, p.Y, 1, 1);
-                    pictureBox1.Invalidate();
-                }
-
-            }
-            Construction(points, points.Count);
-            hull = hull.Distinct().ToList();
-            Graphics graphics = Graphics.FromImage(pictureBox1.Image);
-            Pen pen = new Pen(Color.Red);
-            hull.Sort((a, b) => Angle(a, GetCentroid(hull)).CompareTo(Angle(b, GetCentroid(hull))));
-            graphics.DrawPolygon(pen, hull.ToArray());
-            pictureBox1.Invalidate();
-
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            pictureBox1.Image = new Bitmap(pictureBox1.Width, pictureBox1.Height);
-            Graphics graphics = Graphics.FromImage(pictureBox1.Image);
-            graphics.Clear(Color.White);
-            button1.Enabled = false;
-            button2.Enabled = false;
-            points.Clear();
-        }
     }
 }
